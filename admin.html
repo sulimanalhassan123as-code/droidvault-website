@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0e17">
+<meta name="robots" content="noindex, nofollow">
+<title>DroidVault Admin — Key Management</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="index.html"><span class="shield">🛡️</span> DroidVault</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="install.html">Install</a>
+      <a href="activate.html">Activate</a>
+    </div>
+  </div>
+</nav>
+
+<section class="wrap" style="padding-top:44px">
+  <h2 class="sec">🔑 Admin console</h2>
+  <p class="sec-sub">Owner-only area. Generate, inspect and revoke premium keys.</p>
+
+  <div class="form-card" style="margin-bottom:28px">
+    <div class="field">
+      <label for="token">Admin token</label>
+      <input type="password" id="token" placeholder="Your secret admin token" autocomplete="off">
+      <div class="hint">Kept only in this browser session — never stored on the server.</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-pane="gen">Generate</div>
+    <div class="tab" data-pane="list">All Keys</div>
+    <div class="tab" data-pane="revoke">Revoke</div>
+  </div>
+
+  <!-- GENERATE -->
+  <div class="tabpane on" id="gen">
+    <div class="step">
+      <h3>Generate new keys</h3>
+      <p>Each key is created as <b>active</b> and ready for a customer. It becomes <b>used</b> the moment they activate it on their phone.</p>
+      <div class="field" style="max-width:180px">
+        <label for="count">How many</label>
+        <input type="number" id="count" value="1" min="1" max="100">
+      </div>
+      <button class="btn btn-primary" id="genBtn">Generate</button>
+      <div class="result" id="genResult"></div>
+    </div>
+  </div>
+
+  <!-- LIST -->
+  <div class="tabpane" id="list">
+    <div class="step">
+      <h3>All keys</h3>
+      <p>Live view of every key in the database.</p>
+      <button class="btn btn-primary" id="listBtn">Refresh</button>
+      <div class="result" id="listResult"></div>
+      <div class="tbl-wrap" id="tblWrap" style="display:none">
+        <table id="tbl">
+          <thead><tr><th>Key</th><th>Status</th><th>Device</th><th>Rebinds</th><th>Activated</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVOKE -->
+  <div class="tabpane" id="revoke">
+    <div class="step">
+      <h3>Revoke a key</h3>
+      <p>Revoked keys stop working immediately, even if already activated. Use for refunds or abuse.</p>
+      <div class="field" style="max-width:340px">
+        <label for="revokeKey">Key to revoke</label>
+        <input class="mono" type="text" id="revokeKey" placeholder="DVP-XXXX-XXXX-XXXX" spellcheck="false">
+      </div>
+      <button class="btn btn-primary" id="revokeBtn" style="background:linear-gradient(135deg,#f87171,#fbbf24)">Revoke Key</button>
+      <div class="result" id="revokeResult"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  🛡️ DroidVault — by Never Hide
+</footer>
+
+<script src="js/app.js"></script>
+<script>
+const tokenEl = document.getElementById('token');
+const getToken = () => tokenEl.value.trim();
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+    document.querySelectorAll('.tabpane').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    document.getElementById(t.dataset.pane).classList.add('on');
+  });
+});
+
+// GENERATE
+document.getElementById('genBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('genBtn'), res = document.getElementById('genResult');
+  res.style.display = 'none';
+  const count = Math.min(Math.max(parseInt(document.getElementById('count').value) || 1, 1), 100);
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Generating...';
+  try {
+    const r = await callApi({ action: 'generate', adminToken: getToken(), count });
+    if (r.success) {
+      const rows = r.keys.map(k => '<div style="font-family:ui-monospace,Menlo,monospace;font-size:.95rem;padding:4px 0">' + esc(k) + '</div>').join('');
+      showResult(res, true, '✓ Generated ' + r.count + ' key' + (r.count > 1 ? 's' : '') +
+        '<button class="copybtn" style="position:static;margin-left:10px" data-text="' + esc(r.keys.join('\n')) + '">Copy all</button>', rows);
+    } else {
+      showResult(res, false, '✕ ' + esc(r.error || 'Failed'), r.error === 'Unauthorized' ? 'Check your admin token.' : '');
+    }
+  } catch { showResult(res, false, '✕ Connection error', 'Try again.'); }
+  btn.disabled = false; btn.textContent = 'Generate';
+});
+
+// LIST
+document.getElementById('listBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('listBtn'), res = document.getElementById('listResult');
+  const wrap = document.getElementById('tblWrap');
+  res.style.display = 'none'; wrap.style.display = 'none';
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Loading...';
+  try {
+    const r = await callApi({ action: 'list', adminToken: getToken() });
+    if (r.success) {
+      const tbody = document.querySelector('#tbl tbody');
+      tbody.innerHTML = r.keys.map(k =>
+        '<tr><td class="mono-cell">' + esc(k.key) + '</td>' +
+        '<td><span class="chip ' + esc(k.status) + '">' + esc(k.status) + '</span></td>' +
+        '<td>' + (k.device_id ? '<code style="font-size:.8rem">' + esc(String(k.device_id).slice(0, 14)) + '</code>' : '<span style="color:var(--muted)">—</span>') + '</td>' +
+        '<td>' + (k.rebinds || 0) + '/3</td>' +
+        '<td>' + (k.activated ? new Date(k.activated).toLocaleDateString() : '—') + '</td></tr>'
+      ).join('');
+      wrap.style.display = 'block';
+      showResult(res, true, '✓ ' + r.keys.length + ' key' + (r.keys.length === 1 ? '' : 's') + ' in database');
+    } else {
+      showResult(res, false, '✕ ' + esc(r.error || 'Failed'), r.error === 'Unauthorized' ? 'Check your admin token.' : '');
+    }
+  } catch { showResult(res, false, '✕ Connection error', 'Try again.'); }
+  btn.disabled = false; btn.textContent = 'Refresh';
+});
+
+// REVOKE
+document.getElementById('revokeBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('revokeBtn'), res = document.getElementById('revokeResult');
+  const key = document.getElementById('revokeKey').value.trim().toUpperCase();
+  res.style.display = 'none';
+  if (!/^DVP-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(key)) {
+    showResult(res, false, 'Invalid key format', 'Keys look like DVP-XXXX-XXXX-XXXX.');
+    return;
+  }
+  if (!confirm('Revoke ' + key + '? This cannot be undone.')) return;
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Revoking...';
+  try {
+    const r = await callApi({ action: 'revoke', adminToken: getToken(), key });
+    if (r.success) { showResult(res, true, '✓ ' + esc(r.message)); document.getElementById('revokeKey').value = ''; }
+    else showResult(res, false, '✕ ' + esc(r.error || 'Failed'), r.error === 'Unauthorized' ? 'Check your admin token.' : '');
+  } catch { showResult(res, false, '✕ Connection error', 'Try again.'); }
+  btn.disabled = false; btn.textContent = 'Revoke Key';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0e17">
+<title>Install DroidVault — 3 Steps</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="logo" href="index.html"><span class="shield">🛡️</span> DroidVault</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="activate.html">Activate</a>
+      <a href="admin.html">Admin</a>
+    </div>
+  </div>
+</nav>
+
+<section class="wrap" style="padding-top:44px">
+  <h2 class="sec">Install in 3 steps</h2>
+  <p class="sec-sub">Takes about 5 minutes. Works on any Android phone.</p>
+
+  <div class="step">
+    <span class="num">1</span>
+    <h3>Install Termux from F-Droid</h3>
+    <p>Termux is the free terminal app that powers DroidVault. <b>Do not use the Play Store version</b> — it's outdated and broken.</p>
+    <p><a class="btn btn-primary" style="padding:10px 22px;font-size:.9rem" href="https://f-droid.org/en/packages/com.termux/" target="_blank" rel="noopener">Open F-Droid → Termux</a></p>
+    <div class="tip">After installing, open Termux and continue below. The install button on F-Droid may require adding their repo — follow the prompt, it's safe and standard.</div>
+  </div>
+
+  <div class="step">
+    <span class="num">2</span>
+    <h3>Paste the install command</h3>
+    <p>Open Termux, tap the <b>Copy</b> button below, then <b>long-press in Termux and tap Paste</b>. Press Enter and wait for the DroidVault logo.</p>
+    <div class="codebox">
+      <button class="copybtn" data-target="#install-cmd">Copy</button>
+      <pre id="install-cmd">bash <(curl -sL "https://base44.app/api/apps/6a5b36a45f229ff7bb9e7612/files/mp/public/6a5b36a45f229ff7bb9e7612/93a9e00a6_droidvault_v76.sh")</pre>
+    </div>
+    <p>The first thing it does is grant storage access — <b>tap Allow</b> on the popup. After that, typing <code>droidvault</code> anywhere in Termux opens it.</p>
+  </div>
+
+  <div class="step">
+    <span class="num">3</span>
+    <h3>Connect your Google account (one time)</h3>
+    <p>On first run, DroidVault asks you to connect Google Drive. It will open the rclone wizard — answer exactly like this:</p>
+    <div class="codebox"><pre>1. Type  n            → new remote
+2. Name:  gdrive
+3. Type:  drive       → Google Drive
+4. client_id:         → press Enter (blank)
+5. client_secret:     → press Enter (blank)
+6. Scope:  1          → full access
+7. root_folder_id:    → press Enter (blank)
+8. service_account_file: → press Enter (leave BLANK)
+9. Edit advanced config?:  n
+10. Use auto config?:  y   ← YES, use y here!
+11. A link like http://127.0.0.1:PORT/auth appears →
+    tap it (or copy to Chrome), sign into Google, tap Allow
+12. Shared Drive:  n  → Save: y  → Quit: q</pre></div>
+    <div class="tip">That's it — the browser opens, you tap Allow, and you're connected. No tokens to paste, no typing commands.</div>
+  </div>
+
+  <div class="step">
+    <span class="num">✓</span>
+    <h3>Run your first backup</h3>
+    <p>Type <code>droidvault</code> in Termux, press <b>B</b> (Backup), and choose Photos. Your files start flowing to <code>DroidVaultBackup</code> in your Google Drive.</p>
+    <p>Have a Premium key? Press <b>P</b> in the menu and enter your DVP key to unlock encryption, restore, scheduling and 4× speed.</p>
+  </div>
+
+  <h2 class="sec" style="margin-top:48px">Stuck? Quick fixes</h2>
+  <div class="step">
+    <h3>🔒 Terminal shows <code>&gt;</code> and won't respond</h3>
+    <p>A pasted quote confused the terminal. Press <code>Ctrl+C</code>, then <code>Ctrl+U</code>, and retype the command by hand instead of pasting.</p>
+  </div>
+  <div class="step">
+    <h3>⚠️ "password not set in config file" error</h3>
+    <p>Just reopen DroidVault — v7.4+ auto-repairs this. If it persists, update by re-running the install command from step 2.</p>
+  </div>
+  <div class="step">
+    <h3>❓ How do I update DroidVault?</h3>
+    <p>DroidVault auto-updates itself, or re-run the install command from step 2 — your settings and backups are never touched.</p>
+  </div>
+</section>
+
+<footer>
+  🛡️ DroidVault — by Never Hide<br>
+  <a href="index.html">Home</a> · <a href="activate.html">Activate</a> · <a href="admin.html">Admin</a>
+</footer>
+
+</body>
+</html>
